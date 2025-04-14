@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習一</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+  <button id="toggleBtn">顯示/隱藏文字</button>
+  <p id="text" style="display: none;">哈囉！這是 jQuery 控制的段落。</p>
+
+  <script>
+    $(document).ready(function() {
+      $('#toggleBtn').click(function() {
+        $('#text').toggle(); // 切換顯示與隱藏
+      });
+    });
+  </script>
+
+</body>
+</html>

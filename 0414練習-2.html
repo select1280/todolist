@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習二</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+  <button id="toggleBtn">顯示文字</button>
+  <p id="text" style="display: none;">這段文字會滑出來或滑回去喔～</p>
+
+  <script>
+    $(document).ready(function() {
+      $('#toggleBtn').click(function() {
+        $('#text').slideToggle(300, function() {
+          // 根據目前是否可見，變更按鈕文字
+          if ($('#text').is(':visible')) {
+            $('#toggleBtn').text('隱藏文字');
+          } else {
+            $('#toggleBtn').text('顯示文字');
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

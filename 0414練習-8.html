@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習八：可編輯的待辦清單</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin-right: 5px;
+    }
+    ul {
+      margin-top: 20px;
+      padding-left: 0;
+    }
+    li {
+      list-style: none;
+      padding: 10px;
+      background: #f8f8f8;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.done .item-text {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .delete-btn {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .edit-input {
+      flex-grow: 1;
+      margin-right: 10px;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>✏️ 可編輯的 To-do 清單</h2>
+  <input type="text" id="todoInput" placeholder="輸入待辦事項...">
+  <button id="addBtn">新增</button>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    $(document).ready(function() {
+      // 載入 localStorage
+      function loadTodos() {
+        let saved = localStorage.getItem('todoList');
+        if (saved) {
+          let todos = JSON.parse(saved);
+          todos.forEach(todo => {
+            addTodo(todo.text, todo.done);
+          });
+        }
+      }
+
+      // 儲存到 localStorage
+      function saveTodos() {
+        let todos = [];
+        $('#todoList li').each(function() {
+          todos.push({
+            text: $(this).find('.item-text').text(),
+            done: $(this).hasClass('done')
+          });
+        });
+        localStorage.setItem('todoList', JSON.stringify(todos));
+      }
+
+      // 建立待辦項目
+      function addTodo(text, done = false) {
+        let newItem = $('<li></li>').html(`
+          <span class="item-text">${text}</span>
+          <button class="delete-btn">❌</button>
+        `);
+        if (done) newItem.addClass('done');
+        $('#todoList').append(newItem);
+        saveTodos();
+      }
+
+      // 新增按鈕
+      $('#addBtn').click(function() {
+        let text = $('#todoInput').val().trim();
+        if (text !== '') {
+          addTodo(text);
+          $('#todoInput').val('');
+        }
+      });
+
+      // Enter 新增
+      $('#todoInput').keypress(function(e) {
+        if (e.which === 13) $('#addBtn').click();
+      });
+
+      // 刪除項目
+      $('#todoList').on('click', '.delete-btn', function() {
+        $(this).parent().slideUp(200, function() {
+          $(this).remove();
+          saveTodos();
+        });
+      });
+
+      // 標示完成
+      $('#todoList').on('click', '.item-text', function() {
+        $(this).parent().toggleClass('done');
+        saveTodos();
+      });
+
+      // 編輯功能
+      $('#todoList').on('dblclick', '.item-text', function() {
+        let span = $(this);
+        let currentText = span.text();
+        let input = $('<input type="text" class="edit-input">').val(currentText);
+        span.replaceWith(input);
+        input.focus();
+
+        // 儲存編輯（按 Enter 或失焦）
+        function saveEdit() {
+          let newText = input.val().trim() || currentText;
+          let newSpan = $('<span class="item-text"></span>').text(newText);
+          input.replaceWith(newSpan);
+          saveTodos();
+        }
+
+        input.keypress(function(e) {
+          if (e.which === 13) saveEdit(); // Enter
+        });
+
+        input.blur(function() {
+          saveEdit(); // 失焦
+        });
+      });
+
+      // 載入現有資料
+      loadTodos();
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>jQuery 練習十四：拖曳排序 To-do 清單</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        input,
+        select,
+        button {
+            padding: 8px;
+            margin: 5px 5px 5px 0;
+        }
+
+        .filter-btns {
+            margin: 10px 0;
+        }
+
+        .filter-btns button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .filter-btns .active {
+            background: #444;
+            color: white;
+        }
+
+        #searchInput {
+            width: 250px;
+        }
+
+        ul {
+            margin-top: 20px;
+            padding-left: 0;
+        }
+
+        li {
+            list-style: none;
+            padding: 10px;
+            background: #f8f8f8;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li.done .item-text {
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .deadline {
+            font-size: 12px;
+            color: #555;
+            margin-left: 10px;
+        }
+
+        .expired {
+            color: red;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .item-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            margin-top: 5px;
+            width: fit-content;
+        }
+
+        .tag.工作 {
+            background: #ffcc00;
+            color: #000;
+        }
+
+        .tag.生活 {
+            background: #66ccff;
+            color: #000;
+        }
+
+        .tag.學習 {
+            background: #99cc66;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>🔍 支援分類 + 關鍵字的 To-do 搜尋</h2>
+    <input type="text" id="todoInput" placeholder="輸入待辦事項...">
+    <input type="date" id="deadlineInput">
+    <select id="categorySelect">
+        <option value="工作">工作</option>
+        <option value="生活">生活</option>
+        <option value="學習">學習</option>
+    </select>
+    <button id="addBtn">新增</button>
+
+    <div class="filter-btns">
+        <button class="filter active" data-filter="全部">全部</button>
+        <button class="filter" data-filter="工作">工作</button>
+        <button class="filter" data-filter="生活">生活</button>
+        <button class="filter" data-filter="學習">學習</button>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="🔍 搜尋關鍵字...">
+
+    <ul id="todoList"></ul>
+
+    <script>
+        $(document).ready(function () {
+            // 初始化 Sortable
+            new Sortable(document.getElementById('todoList'), {
+                animation: 150,
+                onEnd: function () {
+                    saveTodos(); // 拖曳後重新儲存順序
+                }
+            });
+
+            function saveTodos() {
+                let todos = [];
+                $('#todoList li').each(function () {
+                    todos.push({
+                        text: $(this).find('.item-text').text(),
+                        deadline: $(this).data('deadline'),
+                        category: $(this).data('category'),
+                        done: $(this).hasClass('done')
+                    });
+                });
+                localStorage.setItem('todoList', JSON.stringify(todos));
+            }
+
+            function loadTodos() {
+                let saved = localStorage.getItem('todoList');
+                if (saved) {
+                    let todos = JSON.parse(saved);
+                    todos.sort((a, b) => {
+                        if (!a.deadline) return 1;
+                        if (!b.deadline) return -1;
+                        return a.deadline.localeCompare(b.deadline);
+                    });
+                    todos.forEach(todo => {
+                        addTodo(todo.text, todo.deadline, todo.category, todo.done, false);
+                    });
+                }
+            }
+
+            function addTodo(text, deadline = '', category = '生活', done = false, doSave = true) {
+                let today = new Date().toISOString().split('T')[0];
+                let isExpired = deadline && deadline < today;
+
+                let newItem = $('<li></li>').html(`
+          <div class="item-left">
+            <span class="item-text">${text}</span>
+            ${deadline ? `<span class="deadline ${isExpired ? 'expired' : ''}">
+              截止日期：${deadline}${isExpired ? '（已逾期）' : ''}
+            </span>` : ''}
+            <span class="tag ${category}">${category}</span>
+          </div>
+          <button class="delete-btn">❌</button>
+        `);
+
+                newItem.data('deadline', deadline);
+                newItem.data('category', category);
+                if (done) newItem.addClass('done');
+                $('#todoList').append(newItem);
+                sortTodoList();
+                if (doSave) saveTodos();
+            }
+
+            function sortTodoList() {
+                let items = $('#todoList li').get();
+                items.sort(function (a, b) {
+                    let ad = $(a).data('deadline');
+                    let bd = $(b).data('deadline');
+                    if (!ad) return 1;
+                    if (!bd) return -1;
+                    return ad.localeCompare(bd);
+                });
+                $('#todoList').empty().append(items);
+                applyFilters();
+            }
+
+            $('#addBtn').click(function () {
+                let text = $('#todoInput').val().trim();
+                let deadline = $('#deadlineInput').val();
+                let category = $('#categorySelect').val();
+                if (text !== '') {
+                    addTodo(text, deadline, category);
+                    $('#todoInput').val('');
+                    $('#deadlineInput').val('');
+                }
+            });
+
+            $('#todoInput').keypress(function (e) {
+                if (e.which === 13) $('#addBtn').click();
+            });
+
+            $('#todoList').on('click', '.item-text', function () {
+                $(this).closest('li').toggleClass('done');
+                saveTodos();
+            });
+
+            $('#todoList').on('click', '.delete-btn', function () {
+                $(this).closest('li').slideUp(200, function () {
+                    $(this).remove();
+                    saveTodos();
+                });
+            });
+
+            $('.filter').click(function () {
+                $('.filter').removeClass('active');
+                $(this).addClass('active');
+                applyFilters();
+            });
+
+            $('#searchInput').on('input', function () {
+                applyFilters();
+            });
+
+            function applyFilters() {
+                let currentFilter = $('.filter.active').data('filter');
+                let keyword = $('#searchInput').val().toLowerCase();
+
+                $('#todoList li').each(function () {
+                    let itemCategory = $(this).data('category');
+                    let itemText = $(this).find('.item-text').text().toLowerCase();
+
+                    let matchCategory = (currentFilter === '全部' || itemCategory === currentFilter);
+                    let matchKeyword = (itemText.includes(keyword) || itemCategory.includes(keyword));
+
+                    if (matchCategory && matchKeyword) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+
+            loadTodos();
+        });
+    </script>
+
+</body>
+
+</html>

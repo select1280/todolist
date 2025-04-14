@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習六：Enter 新增 To-do</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin-right: 5px;
+    }
+    ul {
+      margin-top: 20px;
+      padding-left: 0;
+    }
+    li {
+      list-style: none;
+      padding: 10px;
+      background: #f8f8f8;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.done {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .delete-btn {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🧠 Enter 鍵也能新增待辦！</h2>
+  <input type="text" id="todoInput" placeholder="輸入待辦事項...">
+  <button id="addBtn">新增</button>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    $(document).ready(function() {
+      // 封裝新增待辦的函式
+      function addTodo() {
+        let text = $('#todoInput').val().trim();
+        if (text !== '') {
+          let newItem = $('<li></li>').html(`
+            <span class="item-text">${text}</span>
+            <button class="delete-btn">❌</button>
+          `);
+          $('#todoList').append(newItem);
+          $('#todoInput').val('');
+        }
+      }
+
+      // 按鈕新增
+      $('#addBtn').click(function() {
+        addTodo();
+      });
+
+      // 按 Enter 鍵新增
+      $('#todoInput').keypress(function(e) {
+        if (e.which === 13) { // 13 = Enter
+          addTodo();
+        }
+      });
+
+      // 標示完成
+      $('#todoList').on('click', '.item-text', function() {
+        $(this).parent().toggleClass('done');
+      });
+
+      // 刪除項目
+      $('#todoList').on('click', '.delete-btn', function() {
+        $(this).parent().slideUp(200, function() {
+          $(this).remove();
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

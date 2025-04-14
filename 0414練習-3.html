@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習三：手風琴</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .accordion-content {
+      display: none;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    .accordion-title {
+      cursor: pointer;
+      background: #f0f0f0;
+      padding: 10px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="accordion">
+    <div class="accordion-title">Q1：jQuery 是什麼？</div>
+    <div class="accordion-content">A1：jQuery 是一個 JavaScript 函式庫，讓開發變簡單！</div>
+
+    <div class="accordion-title">Q2：slideToggle 是做什麼的？</div>
+    <div class="accordion-content">A2：它可以滑動展開/收起一個區塊。</div>
+
+    <div class="accordion-title">Q3：怎麼載入 jQuery？</div>
+    <div class="accordion-content">A3：用 CDN 或下載檔案後引入在 HTML 裡。</div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $('.accordion-title').click(function() {
+        var content = $(this).next('.accordion-content');
+        
+        // 如果當前是打開的，就收起來
+        if (content.is(':visible')) {
+          content.slideUp();
+        } else {
+          // 先收起所有內容
+          $('.accordion-content').slideUp();
+          // 展開點擊的那個
+          content.slideDown();
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

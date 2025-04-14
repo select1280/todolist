@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習十：依截止日排序</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 5px 5px 0;
+    }
+    ul {
+      margin-top: 20px;
+      padding-left: 0;
+    }
+    li {
+      list-style: none;
+      padding: 10px;
+      background: #f8f8f8;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.done .item-text {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .deadline {
+      font-size: 12px;
+      color: #555;
+      margin-left: 10px;
+    }
+    .expired {
+      color: red;
+      font-weight: bold;
+    }
+    .delete-btn {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .item-left {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📅 自動依截止日排序的 To-do 清單</h2>
+  <input type="text" id="todoInput" placeholder="輸入待辦事項...">
+  <input type="date" id="deadlineInput">
+  <button id="addBtn">新增</button>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    $(document).ready(function () {
+      function saveTodos() {
+        let todos = [];
+        $('#todoList li').each(function () {
+          todos.push({
+            text: $(this).find('.item-text').text(),
+            deadline: $(this).data('deadline'),
+            done: $(this).hasClass('done')
+          });
+        });
+        localStorage.setItem('todoList', JSON.stringify(todos));
+      }
+
+      function loadTodos() {
+        let saved = localStorage.getItem('todoList');
+        if (saved) {
+          let todos = JSON.parse(saved);
+
+          // 排序邏輯（空的排最後，其餘由小到大）
+          todos.sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return a.deadline.localeCompare(b.deadline);
+          });
+
+          todos.forEach(todo => {
+            addTodo(todo.text, todo.deadline, todo.done);
+          });
+        }
+      }
+
+      function addTodo(text, deadline = '', done = false) {
+        let today = new Date().toISOString().split('T')[0];
+        let isExpired = deadline && deadline < today;
+
+        let newItem = $('<li></li>').html(`
+          <div class="item-left">
+            <span class="item-text">${text}</span>
+            ${deadline ? `<span class="deadline ${isExpired ? 'expired' : ''}">
+              截止日期：${deadline}${isExpired ? '（已逾期）' : ''}
+            </span>` : ''}
+          </div>
+          <button class="delete-btn">❌</button>
+        `);
+
+        if (done) newItem.addClass('done');
+        newItem.data('deadline', deadline);
+        $('#todoList').append(newItem);
+        sortTodoList();
+        saveTodos();
+      }
+
+      function sortTodoList() {
+        let items = $('#todoList li').get();
+
+        items.sort(function (a, b) {
+          let ad = $(a).data('deadline');
+          let bd = $(b).data('deadline');
+
+          if (!ad) return 1;
+          if (!bd) return -1;
+          return ad.localeCompare(bd);
+        });
+
+        $('#todoList').empty().append(items);
+      }
+
+      // 新增按鈕
+      $('#addBtn').click(function () {
+        let text = $('#todoInput').val().trim();
+        let deadline = $('#deadlineInput').val();
+        if (text !== '') {
+          addTodo(text, deadline);
+          $('#todoInput').val('');
+          $('#deadlineInput').val('');
+        }
+      });
+
+      // Enter 新增
+      $('#todoInput').keypress(function (e) {
+        if (e.which === 13) $('#addBtn').click();
+      });
+
+      // 標記完成
+      $('#todoList').on('click', '.item-text', function () {
+        $(this).closest('li').toggleClass('done');
+        saveTodos();
+      });
+
+      // 刪除
+      $('#todoList').on('click', '.delete-btn', function () {
+        $(this).closest('li').slideUp(200, function () {
+          $(this).remove();
+          saveTodos();
+        });
+      });
+
+      // 載入
+      loadTodos();
+    });
+  </script>
+
+</body>
+</html>

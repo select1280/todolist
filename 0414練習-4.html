@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>jQuery 練習四：To-do List</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin-right: 5px;
+    }
+    ul {
+      margin-top: 20px;
+      padding-left: 0;
+    }
+    li {
+      list-style: none;
+      padding: 10px;
+      background: #f8f8f8;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    li.done {
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📝 我的待辦清單</h2>
+  <input type="text" id="todoInput" placeholder="輸入待辦事項...">
+  <button id="addBtn">新增</button>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    $(document).ready(function() {
+      // 新增待辦事項
+      $('#addBtn').click(function() {
+        let text = $('#todoInput').val().trim();
+
+        if (text !== '') {
+          let newItem = $('<li></li>').text(text);
+          $('#todoList').append(newItem);
+          $('#todoInput').val(''); // 清空輸入欄
+        }
+      });
+
+      // 點擊清單項目 → 標記為完成（加刪除線）
+      $('#todoList').on('click', 'li', function() {
+        $(this).toggleClass('done');
+      });
+    });
+  </script>
+
+</body>
+</html>
